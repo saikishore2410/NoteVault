@@ -1,8 +1,9 @@
 {
-  "name": "react-example",
+  "name": "notevault",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Handwritten STEM notes library and AI study toolkit.",
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build",
