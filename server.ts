@@ -94,7 +94,7 @@ async function startServer() {
   app.get('/api/health', (_req, res) => {
     res.json({
       status: 'ok',
-      hasApiKey: Boolean(process.env.GEMINI_API_KEY),
+      aiConfigured: Boolean(process.env.GEMINI_API_KEY),
       timestamp: new Date().toISOString(),
     });
   });
@@ -667,7 +667,7 @@ Return ONLY a valid JSON object matching this schema:
   });
 
   // 9. WebSocket for Live Audio Voice Conversations (gemini-3.8-live)
-  const wss = new WebSocketServer({ server, path: '/live-ws' });
+  const wss = new WebSocketServer({ server, path: '/live-ws', maxPayload: 1024 * 1024 });
 
   wss.on('connection', async (clientWs: WebSocket) => {
     try {
@@ -698,6 +698,7 @@ Return ONLY a valid JSON object matching this schema:
       });
 
       clientWs.on('message', (data: any) => {
+        if (clientWs.readyState !== WebSocket.OPEN) return;
         try {
           const parsed = JSON.parse(data.toString());
           if (parsed.audio) {
