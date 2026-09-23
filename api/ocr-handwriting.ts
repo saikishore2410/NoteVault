@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { imageBase64, mimeType = 'image/jpeg' } = req.body || {};
 
-    if (!imageBase64) {
+    if (typeof imageBase64 !== 'string' || !imageBase64.trim()) {
       return res.status(400).json({ error: 'imageBase64 is required' });
     }
 
