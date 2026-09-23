@@ -1,0 +1,6 @@
+{
+  "name": "NoteVault - Handwritten Notes Library & AI Digitizer",
+  "description": "Accessible online library to explore, search, and digitize authentic handwritten notes across STEM subjects with high-res zoom, OCR inspection, and instant downloads.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

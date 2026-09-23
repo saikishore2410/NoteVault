@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "lastSeen": { "type": "number" },
+        "bookmarkedNoteIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "upvotedNoteIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "studySession": {
+          "type": "object"
+        }
+      },
+      "required": ["id", "email", "createdAt", "lastSeen"]
+    },
+    "UserHistoryItem": {
+      "title": "UserHistoryItem",
+      "type": "object",
+      "properties": {
+        "noteId": { "type": "string" },
+        "noteTitle": { "type": "string" },
+        "subject": { "type": "string" },
+        "topic": { "type": "string" },
+        "lastPageIndex": { "type": "number" },
+        "totalPages": { "type": "number" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["noteId", "noteTitle", "subject", "lastPageIndex", "totalPages", "timestamp"]
+    },
+    "CommunityNote": {
+      "title": "CommunityNote",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "topic": { "type": "string" },
+        "author": { "type": "object" },
+        "authorUid": { "type": "string" },
+        "totalPages": { "type": "number" },
+        "readabilityRating": { "type": "number" },
+        "legibilityScore": { "type": "number" },
+        "upvotes": { "type": "number" },
+        "views": { "type": "number" },
+        "dateUploaded": { "type": "string" },
+        "paperStyle": { "type": "string" },
+        "inkColor": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "pages": { "type": "array" }
+      },
+      "required": ["id", "title", "subject", "authorUid", "totalPages", "pages"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profile with bookmarks, upvotes, and latest study session"
+    },
+    "/users/{userId}/history/{historyId}": {
+      "schema": { "$ref": "UserHistoryItem" },
+      "description": "User reading history tracking which handwritten pages were visited"
+    },
+    "/communityNotes/{noteId}": {
+      "schema": { "$ref": "CommunityNote" },
+      "description": "User uploaded or digitized handwritten notes"
+    }
+  }
+}

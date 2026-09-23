@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-caveat {
+    font-family: 'Caveat', cursive;
+  }
+  .font-kalam {
+    font-family: 'Kalam', cursive;
+  }
+  .font-architect {
+    font-family: 'Architects Daughter', cursive;
+  }
+  .font-patrick {
+    font-family: 'Patrick Hand', cursive;
+  }
+  .font-mono-code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Notebook Paper Patterns */
+  .paper-ruled {
+    background-color: #fdfcf7;
+    background-image: 
+      linear-gradient(90deg, transparent 48px, #ef4444 48px, #ef4444 50px, transparent 50px),
+      linear-gradient(#93c5fd 1px, transparent 1px);
+    background-size: 100% 100%, 100% 28px;
+    background-position: 0 0, 0 20px;
+  }
+
+  .paper-ruled-dark {
+    background-color: #1c1917;
+    background-image: 
+      linear-gradient(90deg, transparent 48px, #991b1b 48px, #991b1b 50px, transparent 50px),
+      linear-gradient(#374151 1px, transparent 1px);
+    background-size: 100% 100%, 100% 28px;
+    background-position: 0 0, 0 20px;
+  }
+
+  .paper-grid {
+    background-color: #fbfbf9;
+    background-image: 
+      linear-gradient(to right, #e2e8f0 1px, transparent 1px),
+      linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .paper-grid-dark {
+    background-color: #18181b;
+    background-image: 
+      linear-gradient(to right, #27272a 1px, transparent 1px),
+      linear-gradient(to bottom, #27272a 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .paper-legal {
+    background-color: #fefce8;
+    background-image: 
+      linear-gradient(90deg, transparent 54px, #f87171 54px, #f87171 55px, transparent 55px, transparent 58px, #f87171 58px, #f87171 59px, transparent 59px),
+      linear-gradient(#94a3b8 1px, transparent 1px);
+    background-size: 100% 100%, 100% 26px;
+    background-position: 0 0, 0 22px;
+  }
+
+  .paper-dots {
+    background-color: #f8fafc;
+    background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+    background-size: 18px 18px;
+  }
+
+  .highlighter-yellow {
+    background: linear-gradient(104deg, rgba(254, 240, 138, 0) 0.9%, rgba(254, 240, 138, 0.75) 2.4%, rgba(253, 224, 71, 0.8) 5.8%, rgba(254, 240, 138, 0.6) 93%, rgba(254, 240, 138, 0) 98%);
+    padding: 0.1em 0.25em;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .highlighter-cyan {
+    background: linear-gradient(104deg, rgba(165, 243, 252, 0) 0.9%, rgba(165, 243, 252, 0.7) 2.4%, rgba(103, 232, 249, 0.7) 5.8%, rgba(165, 243, 252, 0.5) 93%, rgba(165, 243, 252, 0) 98%);
+    padding: 0.1em 0.25em;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .highlighter-pink {
+    background: linear-gradient(104deg, rgba(252, 231, 243, 0) 0.9%, rgba(251, 207, 232, 0.7) 2.4%, rgba(244, 114, 182, 0.65) 5.8%, rgba(251, 207, 232, 0.5) 93%, rgba(252, 231, 243, 0) 98%);
+    padding: 0.1em 0.25em;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .highlighter-green {
+    background: linear-gradient(104deg, rgba(187, 247, 208, 0) 0.9%, rgba(187, 247, 208, 0.7) 2.4%, rgba(134, 239, 172, 0.65) 5.8%, rgba(187, 247, 208, 0.5) 93%, rgba(187, 247, 208, 0) 98%);
+    padding: 0.1em 0.25em;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  /* Custom scrollbar for preview */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
