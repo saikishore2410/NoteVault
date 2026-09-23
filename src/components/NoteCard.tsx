@@ -7,7 +7,8 @@ import {
   ThumbsUp, 
   Eye, 
   Sparkles,
-  FileText
+  FileText,
+  Globe
 } from 'lucide-react';
 import { Note } from '../types/notes';
 import { HandwrittenPageRenderer } from './HandwrittenPageRenderer';
@@ -21,6 +22,7 @@ interface NoteCardProps {
   onUpvote: (noteId: string) => void;
   hasUpvoted: boolean;
   onOpenOCR: (note: Note) => void;
+  onGroundSearch?: (query: string, subject: Note['subject']) => void;
 }
 
 export const NoteCard: React.FC<NoteCardProps> = ({
@@ -32,6 +34,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   onUpvote,
   hasUpvoted,
   onOpenOCR,
+  onGroundSearch,
 }) => {
   const firstPage = note.pages?.[0];
 
@@ -146,14 +149,24 @@ export const NoteCard: React.FC<NoteCardProps> = ({
             <span>{note.upvotes + (hasUpvoted ? 1 : 0)}</span>
           </button>
 
-          {/* Right actions: OCR Inspector, Bookmark, Download, Quick View */}
+          {/* Right actions: OCR Inspector, Search Grounding, Bookmark, Download, Quick View */}
           <div className="flex items-center gap-1">
+            {onGroundSearch && (
+              <button
+                onClick={() => onGroundSearch(`${note.title} ${note.topic}`, note.subject)}
+                title="Search Grounding (gemini-3.5-flash with Google Search)"
+                className="p-1.5 rounded-lg text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              >
+                <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              </button>
+            )}
+
             <button
               onClick={() => onOpenOCR(note)}
               title="Inspect AI Extracted Text (Gemini OCR)"
               className="p-1.5 rounded-lg text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
             >
-              <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             </button>
 
             <button

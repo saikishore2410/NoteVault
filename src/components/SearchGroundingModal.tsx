@@ -195,10 +195,24 @@ export const SearchGroundingModal: React.FC<SearchGroundingModalProps> = ({
                 <span>Search Grounding Notice</span>
               </p>
               <p className="leading-relaxed">{error}</p>
-              {(error.includes('GEMINI_API_KEY') || error.includes('credentials') || error.includes('API Key') || error.includes('quota')) && (
-                <div className="mt-2 pt-2 border-t border-rose-200/60 dark:border-rose-900/40 text-[11px] text-rose-700 dark:text-rose-400">
-                  <span className="font-semibold">Setup Tip: </span>
-                  If deploying to Vercel, ensure <code className="px-1 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 font-mono text-[10px]">GEMINI_API_KEY</code> is added under <span className="font-medium">Project Settings &gt; Environment Variables</span>, then redeploy.
+              {(error.includes('GEMINI_API_KEY') || error.includes('credentials') || error.includes('API Key') || error.includes('quota') || error.includes('Server returned 500') || error.includes('Vercel')) && (
+                <div className="mt-2.5 pt-2.5 border-t border-rose-200/60 dark:border-rose-900/40 text-[11px] text-rose-700 dark:text-rose-400 space-y-1">
+                  <p className="font-semibold text-rose-900 dark:text-rose-200">Why this happens on Vercel:</p>
+                  <p>
+                    Vercel serverless functions need the environment variable <code className="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 font-mono text-[10px] font-bold text-rose-950 dark:text-rose-100">GEMINI_API_KEY</code>.
+                  </p>
+                  <p>
+                    1. Go to your <span className="font-semibold">Vercel Dashboard</span> &gt; <span className="font-semibold">NoteVault project</span> &gt; <span className="font-semibold">Settings</span> &gt; <span className="font-semibold">Environment Variables</span>.
+                  </p>
+                  <p>
+                    2. Add Name: <code className="font-mono font-bold">GEMINI_API_KEY</code> with your Google Gemini API Key.
+                  </p>
+                  <p>
+                    3. Check <strong>Production</strong>, <strong>Preview</strong>, and <strong>Development</strong> &gt; Save.
+                  </p>
+                  <p>
+                    4. Go to <strong>Deployments</strong> &gt; Click the <strong>...</strong> on the latest deployment &gt; <strong>Redeploy</strong>.
+                  </p>
                 </div>
               )}
             </div>

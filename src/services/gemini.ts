@@ -42,8 +42,19 @@ export async function sendChatMessage(options: SendChatOptions): Promise<ChatRes
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Server returned ${response.status}`);
+    let errMsg = '';
+    try {
+      const errorData = await response.json();
+      errMsg = errorData.error;
+    } catch {
+      const text = await response.text().catch(() => '');
+      if (text.includes('FUNCTION_INVOCATION_FAILED')) {
+        errMsg = 'Vercel Serverless Function Invocation error. Ensure GEMINI_API_KEY is configured in Vercel Project Settings > Environment Variables, then redeploy.';
+      } else if (text) {
+        errMsg = text.slice(0, 150);
+      }
+    }
+    throw new Error(errMsg || `Server returned ${response.status}`);
   }
 
   return response.json();
@@ -69,8 +80,19 @@ export async function fetchGoogleSearchGrounding(
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Server returned ${response.status}`);
+    let errMsg = '';
+    try {
+      const errorData = await response.json();
+      errMsg = errorData.error;
+    } catch {
+      const text = await response.text().catch(() => '');
+      if (text.includes('FUNCTION_INVOCATION_FAILED')) {
+        errMsg = 'Vercel Serverless Function Invocation error. Ensure GEMINI_API_KEY is added under Vercel Project Settings > Environment Variables and redeploy.';
+      } else if (text) {
+        errMsg = text.slice(0, 150);
+      }
+    }
+    throw new Error(errMsg || `Server returned ${response.status}`);
   }
 
   return response.json();
