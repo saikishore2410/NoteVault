@@ -8,11 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
-      - run: bun install --frozen-lockfile
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install
       - name: TypeScript check
-        run: bun run lint
+        run: npm run lint
       - name: Production build
-        run: bun run build
+        run: npm run build
