@@ -8,6 +8,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { prompt, imageBase64, mimeType = 'image/png', aspectRatio = '16:9' } = req.body || {};
+    if ((prompt !== undefined && typeof prompt !== 'string') || (imageBase64 !== undefined && typeof imageBase64 !== 'string')) {
+      return res.status(400).json({ error: 'Prompt and image must be strings' });
+    }
     if (!prompt && !imageBase64) {
       return res.status(400).json({ error: 'Prompt or image is required' });
     }
