@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { operationName } = req.body || {};
-    if (!operationName) {
+    if (typeof operationName !== 'string' || !operationName.trim()) {
       return res.status(400).json({ error: 'operationName is required' });
     }
 
