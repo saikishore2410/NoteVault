@@ -1,24 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
-
-const apiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({
-  apiKey: apiKey || undefined,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
-
-function formatApiError(error: any): string {
-  if (!error) return 'An unexpected error occurred';
-  let rawMsg = typeof error === 'string' ? error : error.message || String(error);
-  if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('quota')) {
-    return 'Gemini API quota exceeded or billing-enabled API key required.';
-  }
-  return rawMsg;
-}
+import { getGeminiClient, formatGeminiError } from './_gemini';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -27,9 +8,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { query, subject } = req.body || {};
-    if (!query) {
+    if (!query || typeof query !== 'string') {
       return res.status(400).json({ error: 'Query string is required' });
     }
+
+    const ai = getGeminiClient();
 
     const prompt = `Topic/Question: ${query}
 Subject Area: ${subject || 'STEM / Academic Research'}
@@ -62,6 +45,7 @@ Provide:
       model: 'gemini-3.5-flash',
     });
   } catch (error: any) {
-    return res.status(500).json({ error: formatApiError(error) });
+    console.error('Error in Vercel /api/search-grounding:', error);
+    return res.status(500).json({ error: formatGeminiError(error) });
   }
 }

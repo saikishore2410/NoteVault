@@ -1,44 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
-
-const apiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({
-  apiKey: apiKey || undefined,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
-
-function formatApiError(error: any): string {
-  if (!error) return 'An unexpected error occurred';
-  let rawMsg = '';
-  if (typeof error === 'string') {
-    rawMsg = error;
-  } else if (error.message) {
-    rawMsg = error.message;
-  } else {
-    rawMsg = String(error);
-  }
-
-  try {
-    const parsed = JSON.parse(rawMsg);
-    if (parsed?.error?.message) {
-      rawMsg = parsed.error.message;
-    }
-  } catch {}
-
-  if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('resource_exhausted') || rawMsg.includes('quota') || rawMsg.includes('limit: 0')) {
-    return 'Gemini API quota exceeded or billing-enabled API key required for this model. You can select a billing-enabled API key in Settings > Secrets.';
-  }
-
-  if (rawMsg.includes('overloaded') || rawMsg.includes('503') || rawMsg.includes('UNAVAILABLE')) {
-    return 'The Gemini model API is temporarily overloaded with high traffic. Please retry in a few seconds.';
-  }
-
-  return rawMsg;
-}
+import { getGeminiClient, formatGeminiError } from './_gemini';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -58,6 +19,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Message string is required' });
     }
+
+    const ai = getGeminiClient();
 
     let systemInstruction = `You are NoteVault AI, a top-tier STEM academic tutor, researcher, and handwritten notes expert.
 You help university students and engineers master complex topics across Computer Science, Mathematics, Physics, Electrical Engineering, and Chemistry.
@@ -131,7 +94,7 @@ Use this context to provide hyper-relevant answers.`;
   } catch (error: any) {
     console.error('Error in Vercel /api/chat:', error);
     return res.status(500).json({
-      error: formatApiError(error),
+      error: formatGeminiError(error),
     });
   }
 }

@@ -1,15 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI, GenerateVideosOperation } from '@google/genai';
-
-const apiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({
-  apiKey: apiKey || undefined,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
+import { GenerateVideosOperation } from '@google/genai';
+import { getGeminiClient, formatGeminiError } from './_gemini';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -22,15 +13,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'operationName is required' });
     }
 
+    const ai = getGeminiClient();
     const op = new GenerateVideosOperation();
     op.name = operationName;
-    const updated = await ai.operations.getVideosOperation({ operation: op });
 
-    const uri = updated.response?.generatedVideos?.[0]?.video?.uri;
+    const pollResult = await ai.operations.getVideosOperation({
+      operation: op,
+    });
+
+    const uri = (pollResult.response as any)?.generatedVideos?.[0]?.video?.uri;
     if (!uri) {
       return res.status(404).json({ error: 'Generated video URI not found or video still processing' });
     }
 
+    const apiKey = process.env.GEMINI_API_KEY || '';
     const videoRes = await fetch(uri, {
       headers: { 'x-goog-api-key': apiKey },
     });
@@ -39,10 +35,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(videoRes.status).json({ error: 'Failed to fetch video stream from Google' });
     }
 
-    res.setHeader('Content-Type', 'video/mp4');
     const arrayBuffer = await videoRes.arrayBuffer();
-    return res.send(Buffer.from(arrayBuffer));
+    const buffer = Buffer.from(arrayBuffer);
+
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Content-Disposition', 'attachment; filename="stem-concept-veo.mp4"');
+    res.setHeader('Content-Length', buffer.length);
+    return res.status(200).send(buffer);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Error downloading video' });
+    console.error('Error in Vercel /api/video-download:', error);
+    return res.status(500).json({
+      error: formatGeminiError(error),
+    });
   }
 }

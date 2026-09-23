@@ -1,24 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
-
-const apiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({
-  apiKey: apiKey || undefined,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
-
-function formatApiError(error: any): string {
-  if (!error) return 'An unexpected error occurred';
-  let rawMsg = typeof error === 'string' ? error : error.message || String(error);
-  if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('quota')) {
-    return 'Gemini API quota exceeded or billing-enabled API key required.';
-  }
-  return rawMsg;
-}
+import { getGeminiClient, formatGeminiError } from './_gemini';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -27,65 +8,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { imageBase64, mimeType = 'image/jpeg' } = req.body || {};
+
     if (!imageBase64) {
       return res.status(400).json({ error: 'imageBase64 is required' });
     }
 
-    const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
+    const ai = getGeminiClient();
 
-    const prompt = `You are NoteVault's Expert Handwritten OCR & STEM Document Digitizer engine.
-Carefully inspect this image of handwritten notes or diagrams.
-Extract and transcribe the contents into structured educational study material.
+    const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
 
-Return ONLY a valid JSON object matching this schema:
+    const prompt = `Analyze this handwritten student note or technical diagram with extreme precision:
+1. Transcribe the handwriting accurately into clean GitHub-flavored Markdown.
+2. Convert all mathematical equations, integrals, matrices, summations, and scientific formulas into standard LaTeX notation ($...$ inline or $$...$$ display block).
+3. Transcribe code snippets, block diagrams, or pseudo-code into fenced code blocks.
+4. Extract key scientific terms, theorems, and definitions.
+5. Provide a confidence score (0-100) reflecting legibility.
+6. Provide a clean inferred note title and likely academic Subject ('Computer Science', 'Mathematics', 'Physics', 'Electrical Engineering', or 'Chemistry').
+
+Respond strictly in valid JSON format matching this schema:
 {
-  "title": "Concise, descriptive title of the notes",
-  "subject": "Mathematics | Computer Science | Physics | Electrical Eng | Chemistry | Biology",
-  "topic": "Specific chapter or topic title",
-  "rawText": "Complete transcription in GitHub-flavored markdown. Use headings (#, ##), bullet points, and code blocks where appropriate.",
-  "latex": ["array of key mathematical formulas in LaTeX format without $ symbols"],
-  "confidence": 97.5
+  "title": "Clean Note Title",
+  "subject": "Mathematics",
+  "confidence": 96,
+  "latex": ["\\\\int_{-\\\\infty}^{\\\\infty} e^{-x^2} dx = \\\\sqrt{\\\\pi}"],
+  "keyTerms": ["Gaussian Integral", "Calculus"],
+  "rawText": "# Transcribed Content\\n\\nMarkdown formatted transcript here with $math$..."
 }`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.5-flash',
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              data: cleanBase64,
-              mimeType: mimeType || 'image/jpeg',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType,
+                data: cleanBase64,
+              },
             },
-          },
-          {
-            text: prompt,
-          },
-        ],
-      },
+          ],
+        },
+      ],
       config: {
         responseMimeType: 'application/json',
       },
     });
 
-    const responseText = response.text || '{}';
-    let parsedData: any = {};
+    const text = response.text || '{}';
+    let parsed: any;
     try {
-      parsedData = JSON.parse(responseText);
+      parsed = JSON.parse(text);
     } catch {
-      const match = responseText.match(/\{[\s\S]*\}/);
-      if (match) parsedData = JSON.parse(match[0]);
+      const match = text.match(/\{[\s\S]*\}/);
+      parsed = match ? JSON.parse(match[0]) : { rawText: text, title: 'Digitized Note' };
     }
 
-    return res.status(200).json({
-      title: parsedData.title || 'Digitized Handwritten Note',
-      subject: parsedData.subject || 'Computer Science',
-      topic: parsedData.topic || 'Handwritten Study Material',
-      rawText: parsedData.rawText || responseText,
-      latex: Array.isArray(parsedData.latex) ? parsedData.latex : [],
-      confidence: typeof parsedData.confidence === 'number' ? parsedData.confidence : 96.8,
-      model: 'gemini-3.5-flash',
-    });
+    return res.status(200).json(parsed);
   } catch (error: any) {
-    return res.status(500).json({ error: formatApiError(error) });
+    console.error('Error in Vercel /api/ocr-handwriting:', error);
+    return res.status(500).json({
+      error: formatGeminiError(error),
+    });
   }
 }

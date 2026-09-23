@@ -22,15 +22,31 @@ async function startServer() {
   app.use(express.json({ limit: '50mb' }));
 
   // Initialize GoogleGenAI SDK on the server with User-Agent header
-  const apiKey = process.env.GEMINI_API_KEY || '';
-  const ai = new GoogleGenAI({
-    apiKey: apiKey || undefined,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
+  const getAiClient = () => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error('GEMINI_API_KEY environment variable is not set. Please add GEMINI_API_KEY in your deployment environment variables or AI Studio Secrets.');
+    }
+    return new GoogleGenAI({
+      apiKey: apiKey.trim(),
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
       },
-    },
-  });
+    });
+  };
+
+  let ai: GoogleGenAI;
+  try {
+    ai = getAiClient();
+  } catch {
+    // If not set yet, fallback so server boots, but individual routes will recheck
+    ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY || 'missing-key',
+      httpOptions: { headers: { 'User-Agent': 'aistudio-build' } },
+    });
+  }
 
   // Human-readable API error formatter for GoogleGenAI exceptions and rate limits
   function formatApiError(error: any): string {
@@ -53,8 +69,18 @@ async function startServer() {
       // not JSON string
     }
 
-    if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('resource_exhausted') || rawMsg.includes('quota') || rawMsg.includes('limit: 0')) {
-      return 'Gemini API quota exceeded or billing-enabled API key required for this model. You can select a billing-enabled API key in Settings > Secrets.';
+    if (
+      rawMsg.includes('Could not load the default credentials') ||
+      rawMsg.includes('credentials') ||
+      rawMsg.includes('GEMINI_API_KEY environment variable is not set') ||
+      rawMsg.includes('API key not valid') ||
+      rawMsg.includes('API key should be set')
+    ) {
+      return 'Missing or invalid Gemini API Key. Please add your GEMINI_API_KEY to your environment variables (in Vercel Project Settings > Environment Variables or AI Studio Secrets).';
+    }
+
+    if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('resource_exhausted') || rawMsg.includes('quota') || rawMsg.includes('limit: 0') || rawMsg.includes('429')) {
+      return 'Gemini API quota exceeded or billing-enabled API key required for this model. You can select a billing-enabled API key in Settings > Secrets or Google AI Studio.';
     }
 
     if (rawMsg.includes('overloaded') || rawMsg.includes('503') || rawMsg.includes('UNAVAILABLE')) {
@@ -426,8 +452,9 @@ Include:
         return;
       }
 
+      const currentKey = process.env.GEMINI_API_KEY || '';
       const videoRes = await fetch(uri, {
-        headers: { 'x-goog-api-key': apiKey },
+        headers: { 'x-goog-api-key': currentKey },
       });
 
       if (!videoRes.ok) {

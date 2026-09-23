@@ -1,15 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
-
-const apiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({
-  apiKey: apiKey || undefined,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
+import { getGeminiClient, formatGeminiError } from './_gemini';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -22,31 +12,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
+    const ai = getGeminiClient();
     const targetModel = isFullTrack ? 'lyria-3-pro-preview' : 'lyria-3-clip-preview';
-    const response = await ai.models.generateContentStream({
+
+    const response = await ai.models.generateContent({
       model: targetModel,
-      contents: prompt,
+      contents: `Generate calming, deep-focus instrumental audio for university STEM studying: ${prompt}`,
     });
 
-    let audioBase64 = '';
-    let mimeType = 'audio/wav';
-    let lyrics = '';
+    let audioBase64: string | null = null;
+    let mimeType = 'audio/mp3';
 
-    for await (const chunk of response) {
-      const parts = chunk.candidates?.[0]?.content?.parts;
-      if (!parts) continue;
-      for (const part of parts) {
-        if (part.inlineData?.data) {
-          if (!audioBase64 && part.inlineData.mimeType) {
-            mimeType = part.inlineData.mimeType;
-          }
-          audioBase64 += part.inlineData.data;
-        }
-        if (part.text && !lyrics) {
-          lyrics = part.text;
+    const candidate = response.candidates?.[0];
+    if (candidate?.content?.parts) {
+      for (const part of candidate.content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          audioBase64 = part.inlineData.data;
+          mimeType = part.inlineData.mimeType || mimeType;
+          break;
         }
       }
     }
+
+    const lyrics = response.text || '';
 
     return res.status(200).json({
       audioBase64,
@@ -55,6 +43,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model: targetModel,
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Music generation error' });
+    console.error('Error in Vercel /api/generate-music:', error);
+    return res.status(500).json({
+      error: formatGeminiError(error),
+    });
   }
 }

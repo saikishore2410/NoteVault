@@ -1,15 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
-
-const apiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({
-  apiKey: apiKey || undefined,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
+import { getGeminiClient, formatGeminiError } from './_gemini';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -22,33 +12,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Prompt or image is required' });
     }
 
+    const ai = getGeminiClient();
     const selectedAspectRatio = aspectRatio === '9:16' ? '9:16' : '16:9';
-    const videoPayload: any = {
+
+    const params: any = {
       model: 'veo-3.1-lite-generate-preview',
-      prompt: prompt || 'Animate this scientific diagram showing dynamic physical motion and step-by-step processes.',
+      prompt: prompt || 'Animate this STEM concept with smooth academic transitions and pedagogical clarity',
       config: {
-        numberOfVideos: 1,
-        resolution: '720p',
         aspectRatio: selectedAspectRatio,
       },
     };
 
     if (imageBase64) {
-      videoPayload.image = {
-        imageBytes: imageBase64,
-        mimeType: mimeType || 'image/png',
+      params.image = {
+        imageBytes: imageBase64.replace(/^data:image\/[a-z]+;base64,/, ''),
+        mimeType,
       };
     }
 
-    const operation = await ai.models.generateVideos(videoPayload);
+    const operation = await ai.models.generateVideos(params);
 
     return res.status(200).json({
       operationName: operation.name,
-      aspectRatio: selectedAspectRatio,
+      done: operation.done || false,
       model: 'veo-3.1-lite-generate-preview',
     });
   } catch (error: any) {
-    console.error('Error starting video generation in Vercel:', error);
-    return res.status(500).json({ error: error.message || 'Failed to start video generation' });
+    console.error('Error in Vercel /api/generate-video:', error);
+    return res.status(500).json({
+      error: formatGeminiError(error),
+    });
   }
 }

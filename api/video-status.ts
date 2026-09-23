@@ -1,15 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI, GenerateVideosOperation } from '@google/genai';
-
-const apiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({
-  apiKey: apiKey || undefined,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
+import { GenerateVideosOperation } from '@google/genai';
+import { getGeminiClient, formatGeminiError } from './_gemini';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -22,15 +13,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'operationName is required' });
     }
 
+    const ai = getGeminiClient();
     const op = new GenerateVideosOperation();
     op.name = operationName;
-    const updated = await ai.operations.getVideosOperation({ operation: op });
+
+    const pollResult = await ai.operations.getVideosOperation({
+      operation: op,
+    });
 
     return res.status(200).json({
-      done: Boolean(updated.done),
-      error: updated.error || null,
+      done: pollResult.done || false,
+      response: pollResult.response || null,
+      error: pollResult.error || null,
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Error checking video status' });
+    console.error('Error in Vercel /api/video-status:', error);
+    return res.status(500).json({
+      error: formatGeminiError(error),
+    });
   }
 }

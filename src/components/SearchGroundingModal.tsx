@@ -190,9 +190,17 @@ export const SearchGroundingModal: React.FC<SearchGroundingModalProps> = ({
           )}
 
           {error && (
-            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-1">
-              <p className="font-bold">Search Grounding Error</p>
-              <p>{error}</p>
+            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-1.5">
+              <p className="font-bold flex items-center gap-1.5">
+                <span>Search Grounding Notice</span>
+              </p>
+              <p className="leading-relaxed">{error}</p>
+              {(error.includes('GEMINI_API_KEY') || error.includes('credentials') || error.includes('API Key') || error.includes('quota')) && (
+                <div className="mt-2 pt-2 border-t border-rose-200/60 dark:border-rose-900/40 text-[11px] text-rose-700 dark:text-rose-400">
+                  <span className="font-semibold">Setup Tip: </span>
+                  If deploying to Vercel, ensure <code className="px-1 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 font-mono text-[10px]">GEMINI_API_KEY</code> is added under <span className="font-medium">Project Settings &gt; Environment Variables</span>, then redeploy.
+                </div>
+              )}
             </div>
           )}
 
