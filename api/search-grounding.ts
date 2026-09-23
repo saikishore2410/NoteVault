@@ -88,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { query, subject } = req.body || {};
-    if (!query || typeof query !== 'string') {
+    if (typeof query !== 'string' || !query.trim()) {
       return res.status(400).json({ error: 'Query string is required' });
     }
 
