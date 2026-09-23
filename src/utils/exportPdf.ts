@@ -1,5 +1,7 @@
 import { Note } from '../types/notes';
 
+const escapeHtml = (value: unknown): string => String(value ?? '').split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;').split("'").join('&#039;');
+
 export const exportNoteToPdf = (note: Note) => {
   // Use a hidden sandboxed iframe to trigger native browser print/PDF export
   // Avoids window.open / window.alert which are blocked in iframe environments
@@ -36,9 +38,9 @@ export const exportNoteToPdf = (note: Note) => {
     <div style="page-break-after: always; padding: 40px; margin-bottom: 30px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; font-family: 'Inter', -apple-system, sans-serif;">
       <div style="border-bottom: 2px solid #cbd5e1; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
         <div>
-          <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #d97706; letter-spacing: 0.05em;">${note.subject} · ${note.topic}</span>
-          <h1 style="margin: 4px 0 0 0; font-size: 24px; color: #1e293b;">${visual.headerTitle}</h1>
-          <span style="font-size: 12px; color: #64748b;">${visual.dateText} · Contributor: ${note.author?.name || 'Anonymous'}</span>
+          <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #d97706; letter-spacing: 0.05em;">${escapeHtml(note.subject)} · ${escapeHtml(note.topic)}</span>
+          <h1 style="margin: 4px 0 0 0; font-size: 24px; color: #1e293b;">${escapeHtml(visual.headerTitle)}</h1>
+          <span style="font-size: 12px; color: #64748b;">${escapeHtml(visual.dateText)} · Contributor: ${escapeHtml(note.author?.name || 'Anonymous')}</span>
         </div>
         <div style="text-align: right; font-size: 14px; font-weight: 700; color: #64748b;">
           Page ${p.pageNumber || 1} of ${note.totalPages || 1}
@@ -48,16 +50,16 @@ export const exportNoteToPdf = (note: Note) => {
       <div style="line-height: 1.6; color: #334155; font-size: 15px;">
         ${(visual.sections || []).map((sec) => `
           <div style="margin-bottom: 24px;">
-            ${sec.heading ? `<h3 style="font-size: 16px; margin: 0 0 8px 0; color: #0f172a; border-left: 3px solid #f59e0b; padding-left: 8px;">${sec.heading}</h3>` : ''}
-            ${(sec.paragraphs || []).map(text => `<p style="margin: 4px 0;">${text}</p>`).join('')}
-            ${sec.sideMarginNote ? `<div style="margin: 12px 0; padding: 8px 12px; background: #fef3c7; border-left: 3px solid #d97706; font-size: 13px; color: #92400e;"><strong>Margin Note:</strong> ${sec.sideMarginNote}</div>` : ''}
+            ${sec.heading ? `<h3 style="font-size: 16px; margin: 0 0 8px 0; color: #0f172a; border-left: 3px solid #f59e0b; padding-left: 8px;">${escapeHtml(sec.heading)}</h3>` : ''}
+            ${(sec.paragraphs || []).map(text => `<p style="margin: 4px 0;">${escapeHtml(text)}</p>`).join('')}
+            ${sec.sideMarginNote ? `<div style="margin: 12px 0; padding: 8px 12px; background: #fef3c7; border-left: 3px solid #d97706; font-size: 13px; color: #92400e;"><strong>Margin Note:</strong> ${escapeHtml(sec.sideMarginNote)}</div>` : ''}
           </div>
         `).join('')}
       </div>
 
       <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between;">
-        <span>NoteVault Library Archive · Readability Rating: ${note.readabilityRating || 4.9}/5.0</span>
-        <span>Verified OCR Confidence: ${note.legibilityScore || 98}%</span>
+        <span>NoteVault Library Archive · Readability Rating: ${escapeHtml(note.readabilityRating || 4.9)}/5.0</span>
+        <span>Verified OCR Confidence: ${escapeHtml(note.legibilityScore || 98)}%</span>
       </div>
     </div>
   `;
@@ -68,7 +70,7 @@ export const exportNoteToPdf = (note: Note) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>${note.title} - NoteVault Export</title>
+        <title>${escapeHtml(note.title)} - NoteVault Export</title>
         <style>
           @media print {
             body { margin: 0; background: white; }
