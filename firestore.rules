@@ -2,8 +2,6 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
     function isAuthenticated() {
       return request.auth != null && request.auth.uid != null;
     }
@@ -12,22 +10,20 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // User profile document
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      // Users should only be able to read their own profile/data.
+      allow read: if isOwner(userId);
       allow create: if isOwner(userId)
                     && request.resource.data.id == userId;
       allow update: if isOwner(userId)
                     && request.resource.data.id == userId;
       allow delete: if isOwner(userId);
 
-      // User reading history subcollection
       match /history/{historyId} {
         allow read, write: if isOwner(userId);
       }
     }
 
-    // Community / uploaded notes collection
     match /communityNotes/{noteId} {
       allow read: if true;
       allow create: if isAuthenticated()
@@ -36,12 +32,10 @@ service cloud.firestore {
                             && resource.data.authorUid == request.auth.uid;
     }
 
-    // Connection testing
     match /test/{docId} {
       allow read: if true;
     }
 
-    // Default deny
     match /{document=**} {
       allow read, write: if false;
     }
