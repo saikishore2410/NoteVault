@@ -33,7 +33,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   hasUpvoted,
   onOpenOCR,
 }) => {
-  const firstPage = note.pages[0];
+  const firstPage = note.pages?.[0];
 
   return (
     <div className="group relative bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col">
@@ -55,7 +55,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
         <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
           <span className="bg-stone-900/90 text-white text-xs font-medium px-3.5 py-1.5 rounded-full shadow-md flex items-center gap-1.5 backdrop-blur-xs transform translate-y-1 group-hover:translate-y-0 transition-all">
             <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-            Quick View ({note.totalPages} {note.totalPages === 1 ? 'Page' : 'Pages'})
+            Quick View ({note.totalPages || 1} {(note.totalPages || 1) === 1 ? 'Page' : 'Pages'})
           </span>
         </div>
 
@@ -66,10 +66,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           </span>
           <div className="flex items-center gap-1">
             <span className="bg-amber-500/90 text-white backdrop-blur-xs text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1">
-              ★ {note.readabilityRating.toFixed(2)}
+              ★ {typeof note.readabilityRating === 'number' ? note.readabilityRating.toFixed(2) : '4.90'}
             </span>
             <span className="bg-emerald-600/90 text-white backdrop-blur-xs text-[10px] font-medium px-1.5 py-0.5 rounded-md">
-              {note.legibilityScore}% OCR
+              {note.legibilityScore || 98}% OCR
             </span>
           </div>
         </div>
@@ -78,7 +78,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
         <div className="absolute bottom-2 right-2.5 pointer-events-none">
           <span className="bg-stone-900/80 text-stone-200 text-[10px] font-mono px-2 py-0.5 rounded backdrop-blur-xs flex items-center gap-1">
             <FileText className="w-3 h-3 text-stone-400" />
-            {note.totalPages} pages
+            {note.totalPages || 1} pages
           </span>
         </div>
       </div>
@@ -104,19 +104,19 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           {/* Author & Upload date metadata */}
           <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 pt-2 border-t border-stone-100 dark:border-stone-800/80">
             <div className="flex items-center gap-2">
-              {note.author.avatarUrl ? (
+              {note.author?.avatarUrl ? (
                 <img 
                   src={note.author.avatarUrl} 
-                  alt={note.author.name}
+                  alt={note.author?.name || 'Author'}
                   className="w-5 h-5 rounded-full object-cover" 
                 />
               ) : (
                 <div className="w-5 h-5 rounded-full bg-stone-200 dark:bg-stone-700 flex items-center justify-center text-[10px] font-bold">
-                  {note.author.name.charAt(0)}
+                  {(note.author?.name || 'A').charAt(0)}
                 </div>
               )}
               <span className="font-medium text-stone-700 dark:text-stone-300 truncate max-w-[110px]">
-                {note.author.name}
+                {note.author?.name || 'Anonymous'}
               </span>
             </div>
             <div className="flex items-center gap-2 text-[11px]">

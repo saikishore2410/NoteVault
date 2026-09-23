@@ -116,12 +116,13 @@ I can explain handwritten notes, derive complex formulas, verify OCR accuracy, o
     // Prepare note context if active
     let contextNoteData = undefined;
     if (currentActiveNote) {
-      const activePage = currentActiveNote.pages[currentActivePageIndex] || currentActiveNote.pages[0];
+      const pages = Array.isArray(currentActiveNote.pages) ? currentActiveNote.pages : [];
+      const activePage = pages[currentActivePageIndex] || pages[0];
       contextNoteData = {
         title: currentActiveNote.title,
         subject: currentActiveNote.subject,
         topic: currentActiveNote.topic,
-        currentContent: activePage ? activePage.ocrContent.rawText : undefined,
+        currentContent: activePage?.ocrContent?.rawText || activePage?.title,
       };
     } else if (lastSession) {
       contextNoteData = {

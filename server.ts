@@ -53,8 +53,12 @@ async function startServer() {
       // not JSON string
     }
 
-    if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('quota') || rawMsg.includes('limit: 0')) {
+    if (rawMsg.includes('RESOURCE_EXHAUSTED') || rawMsg.includes('resource_exhausted') || rawMsg.includes('quota') || rawMsg.includes('limit: 0')) {
       return 'Gemini API quota exceeded or billing-enabled API key required for this model. You can select a billing-enabled API key in Settings > Secrets.';
+    }
+
+    if (rawMsg.includes('overloaded') || rawMsg.includes('503') || rawMsg.includes('UNAVAILABLE')) {
+      return 'The Gemini model API is temporarily overloaded with high traffic. Please retry in a few seconds.';
     }
 
     return rawMsg;

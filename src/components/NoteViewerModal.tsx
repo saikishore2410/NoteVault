@@ -24,7 +24,7 @@ import {
   Radio,
   Wand2
 } from 'lucide-react';
-import { Note } from '../types/notes';
+import { Note, NotePage } from '../types/notes';
 import { HandwrittenPageRenderer } from './HandwrittenPageRenderer';
 
 interface NoteViewerModalProps {
@@ -72,7 +72,8 @@ export const NoteViewerModal: React.FC<NoteViewerModalProps> = ({
   // Sync to initialPageIndex when opened or note changes
   useEffect(() => {
     if (isOpen && note) {
-      const validIndex = Math.min(Math.max(0, initialPageIndex), note.pages.length - 1);
+      const pageCount = Array.isArray(note.pages) && note.pages.length > 0 ? note.pages.length : 1;
+      const validIndex = Math.min(Math.max(0, initialPageIndex), pageCount - 1);
       setCurrentPageIndex(validIndex);
       setZoomLevel(1);
     }
@@ -91,7 +92,8 @@ export const NoteViewerModal: React.FC<NoteViewerModalProps> = ({
 
   const handleNextPage = useCallback(() => {
     if (!note) return;
-    setCurrentPageIndex((prev) => Math.min(note.pages.length - 1, prev + 1));
+    const pageCount = Array.isArray(note.pages) && note.pages.length > 0 ? note.pages.length : 1;
+    setCurrentPageIndex((prev) => Math.min(pageCount - 1, prev + 1));
   }, [note]);
 
   // Keyboard navigation shortcuts
@@ -120,7 +122,40 @@ export const NoteViewerModal: React.FC<NoteViewerModalProps> = ({
 
   if (!isOpen || !note) return null;
 
-  const currentPage = note.pages[currentPageIndex] || note.pages[0];
+  const pages: NotePage[] = Array.isArray(note.pages) && note.pages.length > 0 ? note.pages : [
+    {
+      id: `fallback-page-${note.id}`,
+      pageNumber: 1,
+      title: note.title,
+      paperType: 'ruled' as const,
+      inkColor: 'blue' as const,
+      ocrContent: {
+        title: note.title,
+        rawText: note.summary || 'Handwritten and structured notes archive.',
+        sections: [
+          {
+            heading: 'Note Summary',
+            content: note.summary || 'No text summary available.',
+            type: 'text',
+          },
+        ],
+        latexFormulas: [],
+        keyTerms: [note.subject],
+      },
+      visualContent: {
+        headerTitle: note.title,
+        dateText: note.uploadDate || 'Saved Note',
+        sections: [
+          {
+            heading: 'Note Overview',
+            paragraphs: [note.summary || 'Handwritten and structured notes archive.'],
+          },
+        ],
+      },
+    },
+  ];
+
+  const currentPage: NotePage = pages[currentPageIndex] || pages[0];
 
   const handleCopyOCRText = () => {
     if (currentPage?.ocrContent?.rawText) {
@@ -160,7 +195,7 @@ export const NoteViewerModal: React.FC<NoteViewerModalProps> = ({
               </span>
               <span className="text-stone-600 text-xs">·</span>
               <span className="text-xs text-stone-400 truncate hidden md:inline">
-                by {note.author.name} ({note.author.institution})
+                by {note.author?.name || 'Anonymous Scholar'} {note.author?.institution ? `(${note.author.institution})` : ''}
               </span>
             </div>
             <h2 className="font-bold text-sm sm:text-base text-stone-100 truncate">
@@ -439,11 +474,11 @@ export const NoteViewerModal: React.FC<NoteViewerModalProps> = ({
         {/* Left: Page Thumbnails Sidebar */}
         <aside className="w-44 bg-stone-900 border-r border-stone-800 p-3 hidden md:flex flex-col shrink-0 overflow-y-auto">
           <div className="text-xs uppercase tracking-wider text-stone-400 font-semibold mb-3 px-1 flex items-center justify-between">
-            <span>Pages ({note.pages.length})</span>
+            <span>Pages ({pages.length})</span>
             <span className="text-[10px] text-stone-500 font-mono">100% OCR</span>
           </div>
           <div className="space-y-3">
-            {note.pages.map((p, idx) => (
+            {pages.map((p, idx) => (
               <button
                 key={p.id}
                 onClick={() => setCurrentPageIndex(idx)}
@@ -537,35 +572,45 @@ export const NoteViewerModal: React.FC<NoteViewerModalProps> = ({
                   Extracted Header
                 </span>
                 <h4 className="text-lg font-bold text-stone-100">
-                  {currentPage?.ocrContent?.title}
+                  {currentPage?.ocrContent?.title || currentPage?.title || note.title}
                 </h4>
               </div>
 
               {/* Sections Breakdown */}
-              {currentPage?.ocrContent?.sections.map((sec, sIdx) => (
-                <div key={sIdx} className="bg-stone-950/70 p-4 rounded-lg border border-stone-800">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-amber-300 text-xs">
-                      {sec.heading}
-                    </span>
-                    {sec.type && (
-                      <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-stone-800 text-stone-400">
-                        {sec.type}
+              {currentPage?.ocrContent?.sections && currentPage.ocrContent.sections.length > 0 ? (
+                currentPage.ocrContent.sections.map((sec, sIdx) => (
+                  <div key={sIdx} className="bg-stone-950/70 p-4 rounded-lg border border-stone-800">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-amber-300 text-xs">
+                        {sec.heading}
                       </span>
+                      {sec.type && (
+                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-stone-800 text-stone-400">
+                          {sec.type}
+                        </span>
+                      )}
+                    </div>
+
+                    {sec.type === 'code' ? (
+                      <pre className="bg-stone-900 p-3 rounded text-xs font-mono text-emerald-300 overflow-x-auto border border-stone-800">
+                        <code>{sec.content}</code>
+                      </pre>
+                    ) : (
+                      <p className="text-xs leading-relaxed text-stone-300 whitespace-pre-line">
+                        {sec.content}
+                      </p>
                     )}
                   </div>
-
-                  {sec.type === 'code' ? (
-                    <pre className="bg-stone-900 p-3 rounded text-xs font-mono text-emerald-300 overflow-x-auto border border-stone-800">
-                      <code>{sec.content}</code>
-                    </pre>
-                  ) : (
-                    <p className="text-xs leading-relaxed text-stone-300 whitespace-pre-line">
-                      {sec.content}
-                    </p>
-                  )}
+                ))
+              ) : currentPage?.ocrContent?.rawText ? (
+                <div className="bg-stone-950/70 p-4 rounded-lg border border-stone-800 whitespace-pre-line text-xs leading-relaxed text-stone-300">
+                  {currentPage.ocrContent.rawText}
                 </div>
-              ))}
+              ) : (
+                <div className="text-xs text-stone-500 italic p-4 text-center">
+                  No OCR text transcription available for this page.
+                </div>
+              )}
 
               {/* LaTeX Formulas recognized */}
               {currentPage?.ocrContent?.latexFormulas && currentPage.ocrContent.latexFormulas.length > 0 && (
@@ -643,12 +688,12 @@ export const NoteViewerModal: React.FC<NoteViewerModalProps> = ({
           </button>
 
           <span className="text-xs text-stone-300 font-medium px-1 sm:px-2 whitespace-nowrap">
-            Pg <strong className="text-amber-400 font-mono">{currentPageIndex + 1}</strong> of {note.pages.length}
+            Pg <strong className="text-amber-400 font-mono">{currentPageIndex + 1}</strong> of {pages.length}
           </span>
 
           <button
             onClick={handleNextPage}
-            disabled={currentPageIndex === note.pages.length - 1}
+            disabled={currentPageIndex >= pages.length - 1}
             className="p-1.5 sm:p-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 disabled:opacity-30 disabled:pointer-events-none transition-colors border border-stone-700/60"
             title="Next Page (Right Arrow)"
           >

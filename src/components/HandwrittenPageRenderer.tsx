@@ -430,7 +430,7 @@ export const HandwrittenPageRenderer: React.FC<HandwrittenPageRendererProps> = (
             )}
 
             <div className="space-y-2 font-hand-caveat text-lg sm:text-xl leading-relaxed">
-              {sec.paragraphs.map((p, pIdx) => (
+              {(sec.paragraphs || []).map((p, pIdx) => (
                 <p key={pIdx} className="relative pl-1">
                   {p}
                 </p>
