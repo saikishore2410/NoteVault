@@ -434,9 +434,11 @@ export default function App() {
         const matchesAuthor = n.author.name.toLowerCase().includes(q);
         const matchesSubject = n.subject.toLowerCase().includes(q);
         const matchesTags = n.tags.some((t) => t.toLowerCase().includes(q));
-        const matchesOCR = n.pages.some((p) => 
-          p.ocrContent.rawText.toLowerCase().includes(q) ||
-          p.visualContent.sections.some(s => s.paragraphs.some(pText => pText.toLowerCase().includes(q)))
+        const matchesOCR = Array.isArray(n.pages) && n.pages.some((p) => 
+          (p?.ocrContent?.rawText && p.ocrContent.rawText.toLowerCase().includes(q)) ||
+          (Array.isArray(p?.visualContent?.sections) && p.visualContent.sections.some(s => 
+            Array.isArray(s?.paragraphs) && s.paragraphs.some(pText => typeof pText === 'string' && pText.toLowerCase().includes(q))
+          ))
         );
         return matchesTitle || matchesTopic || matchesAuthor || matchesSubject || matchesTags || matchesOCR;
       });
