@@ -94,7 +94,7 @@ async function startServer() {
   app.get('/api/health', (_req, res) => {
     res.json({
       status: 'ok',
-      aiConfigured: Boolean(process.env.GEMINI_API_KEY),
+      aiConfigured: Boolean(process.env.GEMINI_API_KEY?.trim()),
       timestamp: new Date().toISOString(),
     });
   });
